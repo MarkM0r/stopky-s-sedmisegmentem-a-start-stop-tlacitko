@@ -3,7 +3,8 @@ Test project
 Stovky, ktere ukazuji cas na sedmisegmentu pomoci tlacitka zapiname a vypaname stopky.
 
 Schéma zapojení
-<img width="2720" height="3040" alt="stm8s_7segment_wiring" src="https://github.com/user-attachments/assets/011764f6-9847-47f7-ab3c-67ad60be54f5" />
+<img width="2720" height="3040" alt="stm8s_7seg_kicad_v4_swpush" src="https://github.com/user-attachments/assets/735681f0-833e-42da-8eef-1df2264e7172" />
+
 
 
 Popis funkce
