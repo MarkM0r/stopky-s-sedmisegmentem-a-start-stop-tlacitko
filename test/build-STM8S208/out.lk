@@ -1,0 +1,16 @@
+-muwx
+-i ./build-STM8S208/out.ihx
+-b HOME = 0x8000
+-b DATA = 0x0001
+-k /usr/local/stow/sdcc-4.4.0/bin/../share/sdcc/lib/stm8
+-k /usr/local/stow/sdcc-4.4.0/share/sdcc/lib/stm8
+-l stm8
+-l ../SPLSPL/spl-STM8S208.ihx.lib
+-l stm8
+build-STM8S208/delay.rel
+build-STM8S208/main.rel
+build-STM8S208/milis.rel
+build-STM8S208/stm8s_it.rel
+build-STM8S208/uart1.rel
+
+-e

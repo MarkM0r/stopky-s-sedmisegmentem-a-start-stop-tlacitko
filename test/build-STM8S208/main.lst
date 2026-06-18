@@ -1,0 +1,1146 @@
+                                      1 ;--------------------------------------------------------
+                                      2 ; File Created by SDCC : free open source ISO C Compiler 
+                                      3 ; Version 4.4.0 #14620 (Linux)
+                                      4 ;--------------------------------------------------------
+                                      5 	.module main
+                                      6 	.optsdcc -mstm8
+                                      7 	
+                                      8 ;--------------------------------------------------------
+                                      9 ; Public variables in this module
+                                     10 ;--------------------------------------------------------
+                                     11 	.globl _main
+                                     12 	.globl _uart1_puts
+                                     13 	.globl _init_uart1
+                                     14 	.globl _milis
+                                     15 	.globl _init_milis
+                                     16 	.globl _GPIO_ReadInputPin
+                                     17 	.globl _GPIO_ReadOutputData
+                                     18 	.globl _GPIO_WriteReverse
+                                     19 	.globl _GPIO_WriteLow
+                                     20 	.globl _GPIO_WriteHigh
+                                     21 	.globl _GPIO_Write
+                                     22 	.globl _GPIO_Init
+                                     23 	.globl _CLK_HSIPrescalerConfig
+                                     24 	.globl _sprintf
+                                     25 ;--------------------------------------------------------
+                                     26 ; ram data
+                                     27 ;--------------------------------------------------------
+                                     28 	.area DATA
+                                     29 ;--------------------------------------------------------
+                                     30 ; ram data
+                                     31 ;--------------------------------------------------------
+                                     32 	.area INITIALIZED
+                                     33 ;--------------------------------------------------------
+                                     34 ; Stack segment in internal ram
+                                     35 ;--------------------------------------------------------
+                                     36 	.area SSEG
+      000000                         37 __start__stack:
+      000000                         38 	.ds	1
+                                     39 
+                                     40 ;--------------------------------------------------------
+                                     41 ; absolute external ram data
+                                     42 ;--------------------------------------------------------
+                                     43 	.area DABS (ABS)
+                                     44 
+                                     45 ; default segment ordering for linker
+                                     46 	.area HOME
+                                     47 	.area GSINIT
+                                     48 	.area GSFINAL
+                                     49 	.area CONST
+                                     50 	.area INITIALIZER
+                                     51 	.area CODE
+                                     52 
+                                     53 ;--------------------------------------------------------
+                                     54 ; interrupt vector
+                                     55 ;--------------------------------------------------------
+                                     56 	.area HOME
+      000000                         57 __interrupt_vect:
+      000000 82v00u00u00             58 	int s_GSINIT ; reset
+      000004 82v00u00u00             59 	int _TRAP_IRQHandler ; trap
+      000008 82v00u00u00             60 	int _TLI_IRQHandler ; int0
+      00000C 82v00u00u00             61 	int _AWU_IRQHandler ; int1
+      000010 82v00u00u00             62 	int _CLK_IRQHandler ; int2
+      000014 82v00u00u00             63 	int _EXTI_PORTA_IRQHandler ; int3
+      000018 82v00u00u00             64 	int _EXTI_PORTB_IRQHandler ; int4
+      00001C 82v00u00u00             65 	int _EXTI_PORTC_IRQHandler ; int5
+      000020 82v00u00u00             66 	int _EXTI_PORTD_IRQHandler ; int6
+      000024 82v00u00u00             67 	int _EXTI_PORTE_IRQHandler ; int7
+      000028 82v00u00u00             68 	int _CAN_RX_IRQHandler ; int8
+      00002C 82v00u00u00             69 	int _CAN_TX_IRQHandler ; int9
+      000030 82v00u00u00             70 	int _SPI_IRQHandler ; int10
+      000034 82v00u00u00             71 	int _TIM1_UPD_OVF_TRG_BRK_IRQHandler ; int11
+      000038 82v00u00u00             72 	int _TIM1_CAP_COM_IRQHandler ; int12
+      00003C 82v00u00u00             73 	int _TIM2_UPD_OVF_BRK_IRQHandler ; int13
+      000040 82v00u00u00             74 	int _TIM2_CAP_COM_IRQHandler ; int14
+      000044 82v00u00u00             75 	int _TIM3_UPD_OVF_BRK_IRQHandler ; int15
+      000048 82v00u00u00             76 	int _TIM3_CAP_COM_IRQHandler ; int16
+      00004C 82v00u00u00             77 	int _UART1_TX_IRQHandler ; int17
+      000050 82v00u00u00             78 	int _UART1_RX_IRQHandler ; int18
+      000054 82v00u00u00             79 	int _I2C_IRQHandler ; int19
+      000058 82v00u00u00             80 	int _UART3_TX_IRQHandler ; int20
+      00005C 82v00u00u00             81 	int _UART3_RX_IRQHandler ; int21
+      000060 82v00u00u00             82 	int _ADC2_IRQHandler ; int22
+      000064 82v00u00u00             83 	int _TIM4_UPD_OVF_IRQHandler ; int23
+      000068 82v00u00u00             84 	int _EEPROM_EEC_IRQHandler ; int24
+                                     85 ;--------------------------------------------------------
+                                     86 ; global & static initialisations
+                                     87 ;--------------------------------------------------------
+                                     88 	.area HOME
+                                     89 	.area GSINIT
+                                     90 	.area GSFINAL
+                                     91 	.area GSINIT
+      000000 CDr00r00         [ 4]   92 	call	___sdcc_external_startup
+      000003 4D               [ 1]   93 	tnz	a
+      000004 27 03            [ 1]   94 	jreq	__sdcc_init_data
+      000006 CCr00r6C         [ 2]   95 	jp	__sdcc_program_startup
+      000009                         96 __sdcc_init_data:
+                                     97 ; stm8_genXINIT() start
+      000009 AEr00r00         [ 2]   98 	ldw x, #l_DATA
+      00000C 27 07            [ 1]   99 	jreq	00002$
+      00000E                        100 00001$:
+      00000E 72 4FuFFuFF      [ 1]  101 	clr (s_DATA - 1, x)
+      000012 5A               [ 2]  102 	decw x
+      000013 26 F9            [ 1]  103 	jrne	00001$
+      000015                        104 00002$:
+      000015 AEr00r00         [ 2]  105 	ldw	x, #l_INITIALIZER
+      000018 27 09            [ 1]  106 	jreq	00004$
+      00001A                        107 00003$:
+      00001A D6uFFuFF         [ 1]  108 	ld	a, (s_INITIALIZER - 1, x)
+      00001D D7uFFuFF         [ 1]  109 	ld	(s_INITIALIZED - 1, x), a
+      000020 5A               [ 2]  110 	decw	x
+      000021 26 F7            [ 1]  111 	jrne	00003$
+      000023                        112 00004$:
+                                    113 ; stm8_genXINIT() end
+                                    114 	.area GSFINAL
+      000000 CCr00r6C         [ 2]  115 	jp	__sdcc_program_startup
+                                    116 ;--------------------------------------------------------
+                                    117 ; Home
+                                    118 ;--------------------------------------------------------
+                                    119 	.area HOME
+                                    120 	.area HOME
+      00006C                        121 __sdcc_program_startup:
+      00006C CCr01r02         [ 2]  122 	jp	_main
+                                    123 ;	return from main will return to caller
+                                    124 ;--------------------------------------------------------
+                                    125 ; code
+                                    126 ;--------------------------------------------------------
+                                    127 	.area CODE
+                                    128 ;	src/main.c: 34: static void seg7_show(uint8_t digit, bool blank)
+                                    129 ; genLabel
+                                    130 ;	-----------------------------------------
+                                    131 ;	 function seg7_show
+                                    132 ;	-----------------------------------------
+                                    133 ;	Register assignment might be sub-optimal.
+                                    134 ;	Stack space usage: 2 bytes.
+      000000                        135 _seg7_show:
+      000000 89               [ 2]  136 	pushw	x
+                                    137 ; genReceive
+                                    138 ;	src/main.c: 36: uint8_t p = blank ? 0 : SEG7[digit % 10];
+                                    139 ; genIfx
+      000001 0D 05            [ 1]  140 	tnz	(0x05, sp)
+      000003 26 03            [ 1]  141 	jrne	00177$
+      000005 CCr00r0C         [ 2]  142 	jp	00119$
+      000008                        143 00177$:
+                                    144 ; genAssign
+      000008 4F               [ 1]  145 	clr	a
+                                    146 ; genGoto
+      000009 CCr00r19         [ 2]  147 	jp	00120$
+                                    148 ; genLabel
+      00000C                        149 00119$:
+                                    150 ; skipping iCode since result will be rematerialized
+                                    151 ; genCast
+                                    152 ; genAssign
+      00000C 5F               [ 1]  153 	clrw	x
+                                    154 ; genIPush
+      00000D 4B 0A            [ 1]  155 	push	#0x0a
+      00000F 4B 00            [ 1]  156 	push	#0x00
+                                    157 ; genSend
+      000011 97               [ 1]  158 	ld	xl, a
+                                    159 ; genCall
+      000012 CDr00r00         [ 4]  160 	call	__modsint
+                                    161 ; genPlus
+      000015 1Cr00r00         [ 2]  162 	addw	x, #(_SEG7+0)
+                                    163 ; genPointerGet
+      000018 F6               [ 1]  164 	ld	a, (x)
+                                    165 ; genCast
+                                    166 ; genAssign
+                                    167 ; genCast
+                                    168 ; genAssign
+                                    169 ; genLabel
+      000019                        170 00120$:
+                                    171 ; genCast
+                                    172 ; genAssign
+                                    173 ; genCast
+                                    174 ; genAssign
+      000019 6B 01            [ 1]  175 	ld	(0x01, sp), a
+                                    176 ;	src/main.c: 40: uint8_t valC = 0;
+                                    177 ; genAssign
+      00001B 5F               [ 1]  178 	clrw	x
+                                    179 ;	src/main.c: 42: if (p & 0x01) valC |= SEG_A;
+                                    180 ; genAnd
+      00001C 7B 01            [ 1]  181 	ld	a, (0x01, sp)
+      00001E 44               [ 1]  182 	srl	a
+      00001F 25 03            [ 1]  183 	jrc	00178$
+      000021 CCr00r27         [ 2]  184 	jp	00102$
+      000024                        185 00178$:
+                                    186 ; skipping generated iCode
+                                    187 ; genAssign
+      000024 A6 08            [ 1]  188 	ld	a, #0x08
+      000026 95               [ 1]  189 	ld	xh, a
+                                    190 ; genLabel
+      000027                        191 00102$:
+                                    192 ;	src/main.c: 43: if (p & 0x02) valC |= SEG_B;
+                                    193 ; genAnd
+      000027 7B 01            [ 1]  194 	ld	a, (0x01, sp)
+      000029 A5 02            [ 1]  195 	bcp	a, #0x02
+      00002B 26 03            [ 1]  196 	jrne	00179$
+      00002D CCr00r34         [ 2]  197 	jp	00104$
+      000030                        198 00179$:
+                                    199 ; skipping generated iCode
+                                    200 ; genOr
+      000030 9E               [ 1]  201 	ld	a, xh
+      000031 AA 10            [ 1]  202 	or	a, #0x10
+      000033 95               [ 1]  203 	ld	xh, a
+                                    204 ; genLabel
+      000034                        205 00104$:
+                                    206 ;	src/main.c: 44: if (p & 0x04) valC |= SEG_C;
+                                    207 ; genAnd
+      000034 7B 01            [ 1]  208 	ld	a, (0x01, sp)
+      000036 A5 04            [ 1]  209 	bcp	a, #0x04
+      000038 26 03            [ 1]  210 	jrne	00180$
+      00003A CCr00r41         [ 2]  211 	jp	00106$
+      00003D                        212 00180$:
+                                    213 ; skipping generated iCode
+                                    214 ; genOr
+      00003D 9E               [ 1]  215 	ld	a, xh
+      00003E AA 20            [ 1]  216 	or	a, #0x20
+      000040 95               [ 1]  217 	ld	xh, a
+                                    218 ; genLabel
+      000041                        219 00106$:
+                                    220 ;	src/main.c: 45: if (p & 0x08) valC |= SEG_D;
+                                    221 ; genAnd
+      000041 7B 01            [ 1]  222 	ld	a, (0x01, sp)
+      000043 A5 08            [ 1]  223 	bcp	a, #0x08
+      000045 26 03            [ 1]  224 	jrne	00181$
+      000047 CCr00r4E         [ 2]  225 	jp	00108$
+      00004A                        226 00181$:
+                                    227 ; skipping generated iCode
+                                    228 ; genOr
+      00004A 9E               [ 1]  229 	ld	a, xh
+      00004B AA 40            [ 1]  230 	or	a, #0x40
+      00004D 95               [ 1]  231 	ld	xh, a
+                                    232 ; genLabel
+      00004E                        233 00108$:
+                                    234 ;	src/main.c: 46: if (p & 0x10) valC |= SEG_E;
+                                    235 ; genAnd
+      00004E 7B 01            [ 1]  236 	ld	a, (0x01, sp)
+      000050 A5 10            [ 1]  237 	bcp	a, #0x10
+      000052 26 03            [ 1]  238 	jrne	00182$
+      000054 CCr00r5A         [ 2]  239 	jp	00110$
+      000057                        240 00182$:
+                                    241 ; skipping generated iCode
+                                    242 ; genOr
+      000057 58               [ 2]  243 	sllw	x
+      000058 99               [ 1]  244 	scf
+      000059 56               [ 2]  245 	rrcw	x
+                                    246 ; genLabel
+      00005A                        247 00110$:
+                                    248 ;	src/main.c: 49: (GPIO_ReadOutputData(SEG_PORT_C) & ~maskC) | (valC ^ maskC));
+                                    249 ; genSend
+      00005A 89               [ 2]  250 	pushw	x
+      00005B AE 50 0A         [ 2]  251 	ldw	x, #0x500a
+                                    252 ; genCall
+      00005E CDr00r00         [ 4]  253 	call	_GPIO_ReadOutputData
+      000061 6B 04            [ 1]  254 	ld	(0x04, sp), a
+      000063 02               [ 1]  255 	rlwa	x
+      000064 84               [ 1]  256 	pop	a
+      000065 01               [ 1]  257 	rrwa	x
+      000066 5B 01            [ 2]  258 	addw	sp, #1
+                                    259 ; genCpl
+      000068 A6 FF            [ 1]  260 	ld	a, #0xff
+      00006A A8 F8            [ 1]  261 	xor	a, #0xf8
+                                    262 ; genAnd
+      00006C 14 02            [ 1]  263 	and	a, (0x02, sp)
+      00006E 6B 02            [ 1]  264 	ld	(0x02, sp), a
+                                    265 ; genXor
+      000070 9E               [ 1]  266 	ld	a, xh
+      000071 A8 F8            [ 1]  267 	xor	a, #0xf8
+                                    268 ; genOr
+      000073 1A 02            [ 1]  269 	or	a, (0x02, sp)
+                                    270 ;	src/main.c: 48: GPIO_Write(SEG_PORT_C,
+                                    271 ; genSend
+                                    272 ; genSend
+      000075 AE 50 0A         [ 2]  273 	ldw	x, #0x500a
+                                    274 ; genCall
+      000078 CDr00r00         [ 4]  275 	call	_GPIO_Write
+                                    276 ;	src/main.c: 52: if (p & 0x20) GPIO_WriteLow(SEG_PORT_B, SEG_F);
+                                    277 ; genAnd
+      00007B 7B 01            [ 1]  278 	ld	a, (0x01, sp)
+      00007D A5 20            [ 1]  279 	bcp	a, #0x20
+      00007F 26 03            [ 1]  280 	jrne	00183$
+      000081 CCr00r8F         [ 2]  281 	jp	00112$
+      000084                        282 00183$:
+                                    283 ; skipping generated iCode
+                                    284 ; genSend
+      000084 A6 08            [ 1]  285 	ld	a, #0x08
+                                    286 ; genSend
+      000086 AE 50 05         [ 2]  287 	ldw	x, #0x5005
+                                    288 ; genCall
+      000089 CDr00r00         [ 4]  289 	call	_GPIO_WriteLow
+                                    290 ; genGoto
+      00008C CCr00r97         [ 2]  291 	jp	00113$
+                                    292 ; genLabel
+      00008F                        293 00112$:
+                                    294 ;	src/main.c: 53: else GPIO_WriteHigh(SEG_PORT_B, SEG_F);
+                                    295 ; genSend
+      00008F A6 08            [ 1]  296 	ld	a, #0x08
+                                    297 ; genSend
+      000091 AE 50 05         [ 2]  298 	ldw	x, #0x5005
+                                    299 ; genCall
+      000094 CDr00r00         [ 4]  300 	call	_GPIO_WriteHigh
+                                    301 ; genLabel
+      000097                        302 00113$:
+                                    303 ;	src/main.c: 55: if (p & 0x40) GPIO_WriteLow(SEG_PORT_B, SEG_G);
+                                    304 ; genAnd
+      000097 7B 01            [ 1]  305 	ld	a, (0x01, sp)
+      000099 A5 40            [ 1]  306 	bcp	a, #0x40
+      00009B 26 03            [ 1]  307 	jrne	00184$
+      00009D CCr00rAB         [ 2]  308 	jp	00115$
+      0000A0                        309 00184$:
+                                    310 ; skipping generated iCode
+                                    311 ; genSend
+      0000A0 A6 01            [ 1]  312 	ld	a, #0x01
+                                    313 ; genSend
+      0000A2 AE 50 05         [ 2]  314 	ldw	x, #0x5005
+                                    315 ; genCall
+      0000A5 CDr00r00         [ 4]  316 	call	_GPIO_WriteLow
+                                    317 ; genGoto
+      0000A8 CCr00rB3         [ 2]  318 	jp	00117$
+                                    319 ; genLabel
+      0000AB                        320 00115$:
+                                    321 ;	src/main.c: 56: else GPIO_WriteHigh(SEG_PORT_B, SEG_G);
+                                    322 ; genSend
+      0000AB A6 01            [ 1]  323 	ld	a, #0x01
+                                    324 ; genSend
+      0000AD AE 50 05         [ 2]  325 	ldw	x, #0x5005
+                                    326 ; genCall
+      0000B0 CDr00r00         [ 4]  327 	call	_GPIO_WriteHigh
+                                    328 ; genLabel
+      0000B3                        329 00117$:
+                                    330 ;	src/main.c: 57: }
+                                    331 ; genEndFunction
+      0000B3 85               [ 2]  332 	popw	x
+      0000B4 85               [ 2]  333 	popw	x
+      0000B5 84               [ 1]  334 	pop	a
+      0000B6 FC               [ 2]  335 	jp	(x)
+                                    336 ;	src/main.c: 59: static void hw_init(void)
+                                    337 ; genLabel
+                                    338 ;	-----------------------------------------
+                                    339 ;	 function hw_init
+                                    340 ;	-----------------------------------------
+                                    341 ;	Register assignment is optimal.
+                                    342 ;	Stack space usage: 0 bytes.
+      0000B7                        343 _hw_init:
+                                    344 ;	src/main.c: 61: CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV1);
+                                    345 ; genSend
+      0000B7 4F               [ 1]  346 	clr	a
+                                    347 ; genCall
+      0000B8 CDr00r00         [ 4]  348 	call	_CLK_HSIPrescalerConfig
+                                    349 ;	src/main.c: 62: init_milis();
+                                    350 ; genCall
+      0000BB CDr00r00         [ 4]  351 	call	_init_milis
+                                    352 ;	src/main.c: 63: init_uart1(115200);
+                                    353 ; genIPush
+      0000BE 4B 00            [ 1]  354 	push	#0x00
+      0000C0 4B C2            [ 1]  355 	push	#0xc2
+      0000C2 4B 01            [ 1]  356 	push	#0x01
+      0000C4 4B 00            [ 1]  357 	push	#0x00
+                                    358 ; genCall
+      0000C6 CDr00r00         [ 4]  359 	call	_init_uart1
+                                    360 ;	src/main.c: 65: GPIO_Init(LED_PORT, LED_PIN, GPIO_MODE_OUT_PP_LOW_SLOW);
+                                    361 ; genIPush
+      0000C9 4B C0            [ 1]  362 	push	#0xc0
+                                    363 ; genSend
+      0000CB A6 20            [ 1]  364 	ld	a, #0x20
+                                    365 ; genSend
+      0000CD AE 50 05         [ 2]  366 	ldw	x, #0x5005
+                                    367 ; genCall
+      0000D0 CDr00r00         [ 4]  368 	call	_GPIO_Init
+                                    369 ;	src/main.c: 67: GPIO_Init(SEG_PORT_C,
+                                    370 ; genIPush
+      0000D3 4B C0            [ 1]  371 	push	#0xc0
+                                    372 ; genSend
+      0000D5 A6 F8            [ 1]  373 	ld	a, #0xf8
+                                    374 ; genSend
+      0000D7 AE 50 0A         [ 2]  375 	ldw	x, #0x500a
+                                    376 ; genCall
+      0000DA CDr00r00         [ 4]  377 	call	_GPIO_Init
+                                    378 ;	src/main.c: 71: GPIO_Init(SEG_PORT_B,
+                                    379 ; genIPush
+      0000DD 4B C0            [ 1]  380 	push	#0xc0
+                                    381 ; genSend
+      0000DF A6 09            [ 1]  382 	ld	a, #0x09
+                                    383 ; genSend
+      0000E1 AE 50 05         [ 2]  384 	ldw	x, #0x5005
+                                    385 ; genCall
+      0000E4 CDr00r00         [ 4]  386 	call	_GPIO_Init
+                                    387 ;	src/main.c: 75: GPIO_Init(BTN_START_PORT, BTN_START_PIN, GPIO_MODE_IN_PU_NO_IT);
+                                    388 ; genIPush
+      0000E7 4B 40            [ 1]  389 	push	#0x40
+                                    390 ; genSend
+      0000E9 A6 10            [ 1]  391 	ld	a, #0x10
+                                    392 ; genSend
+      0000EB AE 50 05         [ 2]  393 	ldw	x, #0x5005
+                                    394 ; genCall
+      0000EE CDr00r00         [ 4]  395 	call	_GPIO_Init
+                                    396 ;	src/main.c: 76: GPIO_Init(BTN_LAP_PORT, BTN_LAP_PIN, GPIO_MODE_IN_PU_NO_IT);
+                                    397 ; genIPush
+      0000F1 4B 40            [ 1]  398 	push	#0x40
+                                    399 ; genSend
+      0000F3 A6 80            [ 1]  400 	ld	a, #0x80
+                                    401 ; genSend
+      0000F5 AE 50 05         [ 2]  402 	ldw	x, #0x5005
+                                    403 ; genCall
+      0000F8 CDr00r00         [ 4]  404 	call	_GPIO_Init
+                                    405 ;	src/main.c: 78: seg7_show(0, false);
+                                    406 ; genIPush
+      0000FB 4B 00            [ 1]  407 	push	#0x00
+                                    408 ; genSend
+      0000FD 4F               [ 1]  409 	clr	a
+                                    410 ; genCall
+      0000FE CDr00r00         [ 4]  411 	call	_seg7_show
+                                    412 ; genLabel
+      000101                        413 00101$:
+                                    414 ;	src/main.c: 79: }
+                                    415 ; genEndFunction
+      000101 81               [ 4]  416 	ret
+                                    417 ;	src/main.c: 81: int main(void)
+                                    418 ; genLabel
+                                    419 ;	-----------------------------------------
+                                    420 ;	 function main
+                                    421 ;	-----------------------------------------
+                                    422 ;	Register assignment might be sub-optimal.
+                                    423 ;	Stack space usage: 93 bytes.
+      000102                        424 _main:
+      000102 52 5D            [ 2]  425 	sub	sp, #93
+                                    426 ;	src/main.c: 83: hw_init();
+                                    427 ; genCall
+      000104 CDr00rB7         [ 4]  428 	call	_hw_init
+                                    429 ;	src/main.c: 85: bool running = false;
+                                    430 ; genAssign
+      000107 0F 2D            [ 1]  431 	clr	(0x2d, sp)
+                                    432 ;	src/main.c: 86: uint32_t start_tick = 0;
+                                    433 ; genAssign
+      000109 5F               [ 1]  434 	clrw	x
+      00010A 1F 30            [ 2]  435 	ldw	(0x30, sp), x
+      00010C 1F 2E            [ 2]  436 	ldw	(0x2e, sp), x
+                                    437 ;	src/main.c: 87: uint32_t elapsed = 0;
+                                    438 ; genAssign
+      00010E 5F               [ 1]  439 	clrw	x
+      00010F 1F 34            [ 2]  440 	ldw	(0x34, sp), x
+      000111 1F 32            [ 2]  441 	ldw	(0x32, sp), x
+                                    442 ;	src/main.c: 88: uint32_t lap = 0;
+                                    443 ; genAssign
+      000113 5F               [ 1]  444 	clrw	x
+      000114 1F 38            [ 2]  445 	ldw	(0x38, sp), x
+      000116 1F 36            [ 2]  446 	ldw	(0x36, sp), x
+                                    447 ;	src/main.c: 89: bool lap_active = false;
+                                    448 ; genAssign
+      000118 0F 3A            [ 1]  449 	clr	(0x3a, sp)
+                                    450 ;	src/main.c: 90: uint32_t lap_end = 0;
+                                    451 ; genAssign
+      00011A 5F               [ 1]  452 	clrw	x
+      00011B 1F 3D            [ 2]  453 	ldw	(0x3d, sp), x
+      00011D 1F 3B            [ 2]  454 	ldw	(0x3b, sp), x
+                                    455 ;	src/main.c: 92: uint32_t led_tick = 0;
+                                    456 ; genAssign
+      00011F 5F               [ 1]  457 	clrw	x
+      000120 1F 41            [ 2]  458 	ldw	(0x41, sp), x
+      000122 1F 3F            [ 2]  459 	ldw	(0x3f, sp), x
+                                    460 ;	src/main.c: 93: uint32_t uart_tick = 0;
+                                    461 ; genAssign
+      000124 5F               [ 1]  462 	clrw	x
+      000125 1F 45            [ 2]  463 	ldw	(0x45, sp), x
+      000127 1F 43            [ 2]  464 	ldw	(0x43, sp), x
+                                    465 ;	src/main.c: 94: uint32_t blink_tick = 0;
+                                    466 ; genAssign
+      000129 5F               [ 1]  467 	clrw	x
+      00012A 1F 49            [ 2]  468 	ldw	(0x49, sp), x
+      00012C 1F 47            [ 2]  469 	ldw	(0x47, sp), x
+                                    470 ;	src/main.c: 95: bool blink_on = true;
+                                    471 ; genAssign
+      00012E A6 01            [ 1]  472 	ld	a, #0x01
+      000130 6B 5D            [ 1]  473 	ld	(0x5d, sp), a
+                                    474 ;	src/main.c: 97: bool btn_s_prev = false, btn_l_prev = false;
+                                    475 ; genAssign
+      000132 0F 4B            [ 1]  476 	clr	(0x4b, sp)
+                                    477 ; genAssign
+      000134 0F 4C            [ 1]  478 	clr	(0x4c, sp)
+                                    479 ;	src/main.c: 98: uint32_t btn_s_t = 0, btn_l_t = 0;
+                                    480 ; genAssign
+      000136 5F               [ 1]  481 	clrw	x
+      000137 1F 4F            [ 2]  482 	ldw	(0x4f, sp), x
+      000139 1F 4D            [ 2]  483 	ldw	(0x4d, sp), x
+                                    484 ; genAssign
+      00013B 5F               [ 1]  485 	clrw	x
+      00013C 1F 53            [ 2]  486 	ldw	(0x53, sp), x
+      00013E 1F 51            [ 2]  487 	ldw	(0x51, sp), x
+                                    488 ;	src/main.c: 101: while (1) {
+                                    489 ; genLabel
+      000140                        490 00134$:
+                                    491 ;	src/main.c: 102: uint32_t now = milis();
+                                    492 ; genCall
+      000140 CDr00r00         [ 4]  493 	call	_milis
+      000143 1F 57            [ 2]  494 	ldw	(0x57, sp), x
+      000145 17 55            [ 2]  495 	ldw	(0x55, sp), y
+                                    496 ;	src/main.c: 104: bool s = (GPIO_ReadInputPin(BTN_START_PORT, BTN_START_PIN) == RESET);
+                                    497 ; genSend
+      000147 A6 10            [ 1]  498 	ld	a, #0x10
+                                    499 ; genSend
+      000149 AE 50 05         [ 2]  500 	ldw	x, #0x5005
+                                    501 ; genCall
+      00014C CDr00r00         [ 4]  502 	call	_GPIO_ReadInputPin
+                                    503 ; genNot
+      00014F A8 01            [ 1]  504 	xor	a, #0x01
+      000151 6B 59            [ 1]  505 	ld	(0x59, sp), a
+                                    506 ;	src/main.c: 105: bool l = (GPIO_ReadInputPin(BTN_LAP_PORT, BTN_LAP_PIN) == RESET);
+                                    507 ; genSend
+      000153 A6 80            [ 1]  508 	ld	a, #0x80
+                                    509 ; genSend
+      000155 AE 50 05         [ 2]  510 	ldw	x, #0x5005
+                                    511 ; genCall
+      000158 CDr00r00         [ 4]  512 	call	_GPIO_ReadInputPin
+                                    513 ; genNot
+      00015B A8 01            [ 1]  514 	xor	a, #0x01
+      00015D 6B 5A            [ 1]  515 	ld	(0x5a, sp), a
+                                    516 ;	src/main.c: 107: bool s_edge = s && !btn_s_prev && (now - btn_s_t > 20);
+                                    517 ; genIfx
+      00015F 0D 59            [ 1]  518 	tnz	(0x59, sp)
+      000161 26 03            [ 1]  519 	jrne	00297$
+      000163 CCr01r90         [ 2]  520 	jp	00138$
+      000166                        521 00297$:
+                                    522 ; genIfx
+      000166 0D 4B            [ 1]  523 	tnz	(0x4b, sp)
+      000168 27 03            [ 1]  524 	jreq	00298$
+      00016A CCr01r90         [ 2]  525 	jp	00138$
+      00016D                        526 00298$:
+                                    527 ; genMinus
+      00016D 1E 57            [ 2]  528 	ldw	x, (0x57, sp)
+      00016F 72 F0 4F         [ 2]  529 	subw	x, (0x4f, sp)
+      000172 1F 03            [ 2]  530 	ldw	(0x03, sp), x
+      000174 7B 56            [ 1]  531 	ld	a, (0x56, sp)
+      000176 12 4E            [ 1]  532 	sbc	a, (0x4e, sp)
+      000178 6B 02            [ 1]  533 	ld	(0x02, sp), a
+      00017A 7B 55            [ 1]  534 	ld	a, (0x55, sp)
+      00017C 12 4D            [ 1]  535 	sbc	a, (0x4d, sp)
+      00017E 6B 01            [ 1]  536 	ld	(0x01, sp), a
+                                    537 ; genCmp
+                                    538 ; genCmpTnz
+      000180 AE 00 14         [ 2]  539 	ldw	x, #0x0014
+      000183 13 03            [ 2]  540 	cpw	x, (0x03, sp)
+      000185 4F               [ 1]  541 	clr	a
+      000186 12 02            [ 1]  542 	sbc	a, (0x02, sp)
+      000188 4F               [ 1]  543 	clr	a
+      000189 12 01            [ 1]  544 	sbc	a, (0x01, sp)
+      00018B 24 03            [ 1]  545 	jrnc	00299$
+      00018D CCr01r94         [ 2]  546 	jp	00139$
+      000190                        547 00299$:
+                                    548 ; skipping generated iCode
+                                    549 ; genLabel
+      000190                        550 00138$:
+                                    551 ; genAssign
+      000190 4F               [ 1]  552 	clr	a
+                                    553 ; genGoto
+      000191 CCr01r96         [ 2]  554 	jp	00140$
+                                    555 ; genLabel
+      000194                        556 00139$:
+                                    557 ; genAssign
+      000194 A6 01            [ 1]  558 	ld	a, #0x01
+                                    559 ; genLabel
+      000196                        560 00140$:
+                                    561 ; genAssign
+      000196 6B 5B            [ 1]  562 	ld	(0x5b, sp), a
+                                    563 ;	src/main.c: 108: bool l_edge = l && !btn_l_prev && (now - btn_l_t > 20);
+                                    564 ; genIfx
+      000198 0D 5A            [ 1]  565 	tnz	(0x5a, sp)
+      00019A 26 03            [ 1]  566 	jrne	00300$
+      00019C CCr01rC9         [ 2]  567 	jp	00144$
+      00019F                        568 00300$:
+                                    569 ; genIfx
+      00019F 0D 4C            [ 1]  570 	tnz	(0x4c, sp)
+      0001A1 27 03            [ 1]  571 	jreq	00301$
+      0001A3 CCr01rC9         [ 2]  572 	jp	00144$
+      0001A6                        573 00301$:
+                                    574 ; genMinus
+      0001A6 1E 57            [ 2]  575 	ldw	x, (0x57, sp)
+      0001A8 72 F0 53         [ 2]  576 	subw	x, (0x53, sp)
+      0001AB 1F 03            [ 2]  577 	ldw	(0x03, sp), x
+      0001AD 7B 56            [ 1]  578 	ld	a, (0x56, sp)
+      0001AF 12 52            [ 1]  579 	sbc	a, (0x52, sp)
+      0001B1 6B 02            [ 1]  580 	ld	(0x02, sp), a
+      0001B3 7B 55            [ 1]  581 	ld	a, (0x55, sp)
+      0001B5 12 51            [ 1]  582 	sbc	a, (0x51, sp)
+      0001B7 6B 01            [ 1]  583 	ld	(0x01, sp), a
+                                    584 ; genCmp
+                                    585 ; genCmpTnz
+      0001B9 AE 00 14         [ 2]  586 	ldw	x, #0x0014
+      0001BC 13 03            [ 2]  587 	cpw	x, (0x03, sp)
+      0001BE 4F               [ 1]  588 	clr	a
+      0001BF 12 02            [ 1]  589 	sbc	a, (0x02, sp)
+      0001C1 4F               [ 1]  590 	clr	a
+      0001C2 12 01            [ 1]  591 	sbc	a, (0x01, sp)
+      0001C4 24 03            [ 1]  592 	jrnc	00302$
+      0001C6 CCr01rCD         [ 2]  593 	jp	00145$
+      0001C9                        594 00302$:
+                                    595 ; skipping generated iCode
+                                    596 ; genLabel
+      0001C9                        597 00144$:
+                                    598 ; genAssign
+      0001C9 4F               [ 1]  599 	clr	a
+                                    600 ; genGoto
+      0001CA CCr01rCF         [ 2]  601 	jp	00146$
+                                    602 ; genLabel
+      0001CD                        603 00145$:
+                                    604 ; genAssign
+      0001CD A6 01            [ 1]  605 	ld	a, #0x01
+                                    606 ; genLabel
+      0001CF                        607 00146$:
+                                    608 ; genAssign
+      0001CF 6B 5C            [ 1]  609 	ld	(0x5c, sp), a
+                                    610 ;	src/main.c: 110: if (!s) btn_s_prev = false;
+                                    611 ; genIfx
+      0001D1 0D 59            [ 1]  612 	tnz	(0x59, sp)
+      0001D3 27 03            [ 1]  613 	jreq	00303$
+      0001D5 CCr01rDD         [ 2]  614 	jp	00104$
+      0001D8                        615 00303$:
+                                    616 ; genAssign
+      0001D8 0F 4B            [ 1]  617 	clr	(0x4b, sp)
+                                    618 ; genGoto
+      0001DA CCr01rF0         [ 2]  619 	jp	00105$
+                                    620 ; genLabel
+      0001DD                        621 00104$:
+                                    622 ;	src/main.c: 111: else if (s_edge) { btn_s_prev = true; btn_s_t = now; }
+                                    623 ; genIfx
+      0001DD 0D 5B            [ 1]  624 	tnz	(0x5b, sp)
+      0001DF 26 03            [ 1]  625 	jrne	00304$
+      0001E1 CCr01rF0         [ 2]  626 	jp	00105$
+      0001E4                        627 00304$:
+                                    628 ; genAssign
+      0001E4 A6 01            [ 1]  629 	ld	a, #0x01
+      0001E6 6B 4B            [ 1]  630 	ld	(0x4b, sp), a
+                                    631 ; genAssign
+      0001E8 16 57            [ 2]  632 	ldw	y, (0x57, sp)
+      0001EA 17 4F            [ 2]  633 	ldw	(0x4f, sp), y
+      0001EC 16 55            [ 2]  634 	ldw	y, (0x55, sp)
+      0001EE 17 4D            [ 2]  635 	ldw	(0x4d, sp), y
+                                    636 ; genLabel
+      0001F0                        637 00105$:
+                                    638 ;	src/main.c: 113: if (!l) btn_l_prev = false;
+                                    639 ; genIfx
+      0001F0 0D 5A            [ 1]  640 	tnz	(0x5a, sp)
+      0001F2 27 03            [ 1]  641 	jreq	00305$
+      0001F4 CCr01rFC         [ 2]  642 	jp	00109$
+      0001F7                        643 00305$:
+                                    644 ; genAssign
+      0001F7 0F 4C            [ 1]  645 	clr	(0x4c, sp)
+                                    646 ; genGoto
+      0001F9 CCr02r0F         [ 2]  647 	jp	00110$
+                                    648 ; genLabel
+      0001FC                        649 00109$:
+                                    650 ;	src/main.c: 114: else if (l_edge) { btn_l_prev = true; btn_l_t = now; }
+                                    651 ; genIfx
+      0001FC 0D 5C            [ 1]  652 	tnz	(0x5c, sp)
+      0001FE 26 03            [ 1]  653 	jrne	00306$
+      000200 CCr02r0F         [ 2]  654 	jp	00110$
+      000203                        655 00306$:
+                                    656 ; genAssign
+      000203 A6 01            [ 1]  657 	ld	a, #0x01
+      000205 6B 4C            [ 1]  658 	ld	(0x4c, sp), a
+                                    659 ; genAssign
+      000207 16 57            [ 2]  660 	ldw	y, (0x57, sp)
+      000209 17 53            [ 2]  661 	ldw	(0x53, sp), y
+      00020B 16 55            [ 2]  662 	ldw	y, (0x55, sp)
+      00020D 17 51            [ 2]  663 	ldw	(0x51, sp), y
+                                    664 ; genLabel
+      00020F                        665 00110$:
+                                    666 ;	src/main.c: 116: if (s_edge) {
+                                    667 ; genIfx
+      00020F 0D 5B            [ 1]  668 	tnz	(0x5b, sp)
+      000211 26 03            [ 1]  669 	jrne	00307$
+      000213 CCr02r58         [ 2]  670 	jp	00115$
+      000216                        671 00307$:
+                                    672 ;	src/main.c: 117: if (!running) {
+                                    673 ; genIfx
+      000216 0D 2D            [ 1]  674 	tnz	(0x2d, sp)
+      000218 27 03            [ 1]  675 	jreq	00308$
+      00021A CCr02r37         [ 2]  676 	jp	00112$
+      00021D                        677 00308$:
+                                    678 ;	src/main.c: 118: start_tick = now - elapsed;
+                                    679 ; genMinus
+      00021D 1E 57            [ 2]  680 	ldw	x, (0x57, sp)
+      00021F 72 F0 34         [ 2]  681 	subw	x, (0x34, sp)
+      000222 1F 30            [ 2]  682 	ldw	(0x30, sp), x
+      000224 7B 56            [ 1]  683 	ld	a, (0x56, sp)
+      000226 12 33            [ 1]  684 	sbc	a, (0x33, sp)
+      000228 6B 2F            [ 1]  685 	ld	(0x2f, sp), a
+      00022A 7B 55            [ 1]  686 	ld	a, (0x55, sp)
+      00022C 12 32            [ 1]  687 	sbc	a, (0x32, sp)
+      00022E 6B 2E            [ 1]  688 	ld	(0x2e, sp), a
+                                    689 ;	src/main.c: 119: running = true;
+                                    690 ; genAssign
+      000230 A6 01            [ 1]  691 	ld	a, #0x01
+      000232 6B 2D            [ 1]  692 	ld	(0x2d, sp), a
+                                    693 ; genGoto
+      000234 CCr02r58         [ 2]  694 	jp	00115$
+                                    695 ; genLabel
+      000237                        696 00112$:
+                                    697 ;	src/main.c: 121: elapsed = now - start_tick;
+                                    698 ; genMinus
+      000237 1E 57            [ 2]  699 	ldw	x, (0x57, sp)
+      000239 72 F0 30         [ 2]  700 	subw	x, (0x30, sp)
+      00023C 1F 34            [ 2]  701 	ldw	(0x34, sp), x
+      00023E 7B 56            [ 1]  702 	ld	a, (0x56, sp)
+      000240 12 2F            [ 1]  703 	sbc	a, (0x2f, sp)
+      000242 6B 33            [ 1]  704 	ld	(0x33, sp), a
+      000244 7B 55            [ 1]  705 	ld	a, (0x55, sp)
+      000246 12 2E            [ 1]  706 	sbc	a, (0x2e, sp)
+      000248 6B 32            [ 1]  707 	ld	(0x32, sp), a
+                                    708 ;	src/main.c: 122: running = false;
+                                    709 ; genAssign
+      00024A 0F 2D            [ 1]  710 	clr	(0x2d, sp)
+                                    711 ;	src/main.c: 123: blink_tick = now;
+                                    712 ; genAssign
+      00024C 16 57            [ 2]  713 	ldw	y, (0x57, sp)
+      00024E 17 49            [ 2]  714 	ldw	(0x49, sp), y
+      000250 16 55            [ 2]  715 	ldw	y, (0x55, sp)
+      000252 17 47            [ 2]  716 	ldw	(0x47, sp), y
+                                    717 ;	src/main.c: 124: blink_on = true;
+                                    718 ; genAssign
+      000254 A6 01            [ 1]  719 	ld	a, #0x01
+      000256 6B 5D            [ 1]  720 	ld	(0x5d, sp), a
+                                    721 ; genLabel
+      000258                        722 00115$:
+                                    723 ;	src/main.c: 121: elapsed = now - start_tick;
+                                    724 ; genMinus
+      000258 1E 57            [ 2]  725 	ldw	x, (0x57, sp)
+      00025A 72 F0 30         [ 2]  726 	subw	x, (0x30, sp)
+      00025D 1F 03            [ 2]  727 	ldw	(0x03, sp), x
+      00025F 7B 56            [ 1]  728 	ld	a, (0x56, sp)
+      000261 12 2F            [ 1]  729 	sbc	a, (0x2f, sp)
+      000263 97               [ 1]  730 	ld	xl, a
+      000264 7B 55            [ 1]  731 	ld	a, (0x55, sp)
+      000266 12 2E            [ 1]  732 	sbc	a, (0x2e, sp)
+      000268 95               [ 1]  733 	ld	xh, a
+                                    734 ;	src/main.c: 128: if (l_edge && running) {
+                                    735 ; genIfx
+      000269 0D 5C            [ 1]  736 	tnz	(0x5c, sp)
+      00026B 26 03            [ 1]  737 	jrne	00309$
+      00026D CCr02r95         [ 2]  738 	jp	00117$
+      000270                        739 00309$:
+                                    740 ; genIfx
+      000270 0D 2D            [ 1]  741 	tnz	(0x2d, sp)
+      000272 26 03            [ 1]  742 	jrne	00310$
+      000274 CCr02r95         [ 2]  743 	jp	00117$
+      000277                        744 00310$:
+                                    745 ;	src/main.c: 129: lap = now - start_tick;
+                                    746 ; genAssign
+      000277 1F 36            [ 2]  747 	ldw	(0x36, sp), x
+      000279 16 03            [ 2]  748 	ldw	y, (0x03, sp)
+      00027B 17 38            [ 2]  749 	ldw	(0x38, sp), y
+                                    750 ;	src/main.c: 130: lap_active = true;
+                                    751 ; genAssign
+      00027D A6 01            [ 1]  752 	ld	a, #0x01
+      00027F 6B 3A            [ 1]  753 	ld	(0x3a, sp), a
+                                    754 ;	src/main.c: 131: lap_end = now + 2000;
+                                    755 ; genPlus
+      000281 16 57            [ 2]  756 	ldw	y, (0x57, sp)
+      000283 72 A9 07 D0      [ 2]  757 	addw	y, #0x07d0
+      000287 17 3D            [ 2]  758 	ldw	(0x3d, sp), y
+      000289 7B 56            [ 1]  759 	ld	a, (0x56, sp)
+      00028B A9 00            [ 1]  760 	adc	a, #0x00
+      00028D 6B 3C            [ 1]  761 	ld	(0x3c, sp), a
+      00028F 7B 55            [ 1]  762 	ld	a, (0x55, sp)
+      000291 A9 00            [ 1]  763 	adc	a, #0x00
+      000293 6B 3B            [ 1]  764 	ld	(0x3b, sp), a
+                                    765 ; genLabel
+      000295                        766 00117$:
+                                    767 ;	src/main.c: 134: if (running) elapsed = now - start_tick;
+                                    768 ; genIfx
+      000295 0D 2D            [ 1]  769 	tnz	(0x2d, sp)
+      000297 26 03            [ 1]  770 	jrne	00311$
+      000299 CCr02rA2         [ 2]  771 	jp	00120$
+      00029C                        772 00311$:
+                                    773 ; genAssign
+      00029C 1F 32            [ 2]  774 	ldw	(0x32, sp), x
+      00029E 16 03            [ 2]  775 	ldw	y, (0x03, sp)
+      0002A0 17 34            [ 2]  776 	ldw	(0x34, sp), y
+                                    777 ; genLabel
+      0002A2                        778 00120$:
+                                    779 ;	src/main.c: 135: if (lap_active && now >= lap_end) lap_active = false;
+                                    780 ; genIfx
+      0002A2 0D 3A            [ 1]  781 	tnz	(0x3a, sp)
+      0002A4 26 03            [ 1]  782 	jrne	00312$
+      0002A6 CCr02rBC         [ 2]  783 	jp	00122$
+      0002A9                        784 00312$:
+                                    785 ; genCmp
+                                    786 ; genCmpTnz
+      0002A9 1E 57            [ 2]  787 	ldw	x, (0x57, sp)
+      0002AB 13 3D            [ 2]  788 	cpw	x, (0x3d, sp)
+      0002AD 7B 56            [ 1]  789 	ld	a, (0x56, sp)
+      0002AF 12 3C            [ 1]  790 	sbc	a, (0x3c, sp)
+      0002B1 7B 55            [ 1]  791 	ld	a, (0x55, sp)
+      0002B3 12 3B            [ 1]  792 	sbc	a, (0x3b, sp)
+      0002B5 24 03            [ 1]  793 	jrnc	00313$
+      0002B7 CCr02rBC         [ 2]  794 	jp	00122$
+      0002BA                        795 00313$:
+                                    796 ; skipping generated iCode
+                                    797 ; genAssign
+      0002BA 0F 3A            [ 1]  798 	clr	(0x3a, sp)
+                                    799 ; genLabel
+      0002BC                        800 00122$:
+                                    801 ;	src/main.c: 137: uint32_t disp = lap_active ? lap : elapsed;
+                                    802 ; genIfx
+      0002BC 0D 3A            [ 1]  803 	tnz	(0x3a, sp)
+      0002BE 26 03            [ 1]  804 	jrne	00314$
+      0002C0 CCr02rCC         [ 2]  805 	jp	00150$
+      0002C3                        806 00314$:
+                                    807 ; genAssign
+      0002C3 16 38            [ 2]  808 	ldw	y, (0x38, sp)
+      0002C5 17 5B            [ 2]  809 	ldw	(0x5b, sp), y
+      0002C7 16 36            [ 2]  810 	ldw	y, (0x36, sp)
+                                    811 ; genGoto
+      0002C9 CCr02rD2         [ 2]  812 	jp	00151$
+                                    813 ; genLabel
+      0002CC                        814 00150$:
+                                    815 ; genAssign
+      0002CC 16 34            [ 2]  816 	ldw	y, (0x34, sp)
+      0002CE 17 5B            [ 2]  817 	ldw	(0x5b, sp), y
+      0002D0 16 32            [ 2]  818 	ldw	y, (0x32, sp)
+                                    819 ; genLabel
+      0002D2                        820 00151$:
+                                    821 ; genAssign
+      0002D2 1E 5B            [ 2]  822 	ldw	x, (0x5b, sp)
+                                    823 ;	src/main.c: 138: uint8_t dig = (uint8_t)((disp / 1000) % 10);
+                                    824 ; genIPush
+      0002D4 4B E8            [ 1]  825 	push	#0xe8
+      0002D6 4B 03            [ 1]  826 	push	#0x03
+      0002D8 4B 00            [ 1]  827 	push	#0x00
+      0002DA 4B 00            [ 1]  828 	push	#0x00
+                                    829 ; genIPush
+      0002DC 89               [ 2]  830 	pushw	x
+      0002DD 90 89            [ 2]  831 	pushw	y
+                                    832 ; genCall
+      0002DF CDr00r00         [ 4]  833 	call	__divulong
+      0002E2 5B 08            [ 2]  834 	addw	sp, #8
+                                    835 ; genIPush
+      0002E4 4B 0A            [ 1]  836 	push	#0x0a
+      0002E6 4B 00            [ 1]  837 	push	#0x00
+      0002E8 4B 00            [ 1]  838 	push	#0x00
+      0002EA 4B 00            [ 1]  839 	push	#0x00
+                                    840 ; genIPush
+      0002EC 89               [ 2]  841 	pushw	x
+      0002ED 90 89            [ 2]  842 	pushw	y
+                                    843 ; genCall
+      0002EF CDr00r00         [ 4]  844 	call	__modulong
+      0002F2 5B 08            [ 2]  845 	addw	sp, #8
+                                    846 ; genCast
+                                    847 ; genAssign
+                                    848 ;	src/main.c: 140: if (!running) {
+                                    849 ; genIfx
+      0002F4 0D 2D            [ 1]  850 	tnz	(0x2d, sp)
+      0002F6 27 03            [ 1]  851 	jreq	00315$
+      0002F8 CCr03r3A         [ 2]  852 	jp	00127$
+      0002FB                        853 00315$:
+                                    854 ;	src/main.c: 141: if (now - blink_tick > 500) {
+                                    855 ; genMinus
+      0002FB 16 57            [ 2]  856 	ldw	y, (0x57, sp)
+      0002FD 72 F2 49         [ 2]  857 	subw	y, (0x49, sp)
+      000300 17 5B            [ 2]  858 	ldw	(0x5b, sp), y
+      000302 7B 56            [ 1]  859 	ld	a, (0x56, sp)
+      000304 12 48            [ 1]  860 	sbc	a, (0x48, sp)
+      000306 6B 5A            [ 1]  861 	ld	(0x5a, sp), a
+      000308 7B 55            [ 1]  862 	ld	a, (0x55, sp)
+      00030A 12 47            [ 1]  863 	sbc	a, (0x47, sp)
+      00030C 6B 59            [ 1]  864 	ld	(0x59, sp), a
+                                    865 ; genCmp
+                                    866 ; genCmpTnz
+      00030E A6 F4            [ 1]  867 	ld	a, #0xf4
+      000310 11 5C            [ 1]  868 	cp	a, (0x5c, sp)
+      000312 A6 01            [ 1]  869 	ld	a, #0x01
+      000314 12 5B            [ 1]  870 	sbc	a, (0x5b, sp)
+      000316 4F               [ 1]  871 	clr	a
+      000317 12 5A            [ 1]  872 	sbc	a, (0x5a, sp)
+      000319 4F               [ 1]  873 	clr	a
+      00031A 12 59            [ 1]  874 	sbc	a, (0x59, sp)
+      00031C 25 03            [ 1]  875 	jrc	00316$
+      00031E CCr03r2E         [ 2]  876 	jp	00125$
+      000321                        877 00316$:
+                                    878 ; skipping generated iCode
+                                    879 ;	src/main.c: 142: blink_on = !blink_on;
+                                    880 ; genNot
+      000321 04 5D            [ 1]  881 	srl	(0x5d, sp)
+      000323 8C               [ 1]  882 	ccf
+      000324 09 5D            [ 1]  883 	rlc	(0x5d, sp)
+                                    884 ;	src/main.c: 143: blink_tick = now;
+                                    885 ; genAssign
+      000326 16 57            [ 2]  886 	ldw	y, (0x57, sp)
+      000328 17 49            [ 2]  887 	ldw	(0x49, sp), y
+      00032A 16 55            [ 2]  888 	ldw	y, (0x55, sp)
+      00032C 17 47            [ 2]  889 	ldw	(0x47, sp), y
+                                    890 ; genLabel
+      00032E                        891 00125$:
+                                    892 ;	src/main.c: 145: seg7_show(dig, !blink_on);
+                                    893 ; genNot
+      00032E 7B 5D            [ 1]  894 	ld	a, (0x5d, sp)
+      000330 A8 01            [ 1]  895 	xor	a, #0x01
+                                    896 ; genIPush
+      000332 88               [ 1]  897 	push	a
+                                    898 ; genSend
+      000333 9F               [ 1]  899 	ld	a, xl
+                                    900 ; genCall
+      000334 CDr00r00         [ 4]  901 	call	_seg7_show
+                                    902 ; genGoto
+      000337 CCr03r40         [ 2]  903 	jp	00128$
+                                    904 ; genLabel
+      00033A                        905 00127$:
+                                    906 ;	src/main.c: 147: seg7_show(dig, false);
+                                    907 ; genIPush
+      00033A 4B 00            [ 1]  908 	push	#0x00
+                                    909 ; genSend
+      00033C 9F               [ 1]  910 	ld	a, xl
+                                    911 ; genCall
+      00033D CDr00r00         [ 4]  912 	call	_seg7_show
+                                    913 ; genLabel
+      000340                        914 00128$:
+                                    915 ;	src/main.c: 150: if (now - led_tick > 1000) {
+                                    916 ; genMinus
+      000340 1E 57            [ 2]  917 	ldw	x, (0x57, sp)
+      000342 72 F0 41         [ 2]  918 	subw	x, (0x41, sp)
+      000345 1F 5B            [ 2]  919 	ldw	(0x5b, sp), x
+      000347 7B 56            [ 1]  920 	ld	a, (0x56, sp)
+      000349 12 40            [ 1]  921 	sbc	a, (0x40, sp)
+      00034B 6B 5A            [ 1]  922 	ld	(0x5a, sp), a
+      00034D 7B 55            [ 1]  923 	ld	a, (0x55, sp)
+      00034F 12 3F            [ 1]  924 	sbc	a, (0x3f, sp)
+      000351 6B 59            [ 1]  925 	ld	(0x59, sp), a
+                                    926 ; genCmp
+                                    927 ; genCmpTnz
+      000353 AE 03 E8         [ 2]  928 	ldw	x, #0x03e8
+      000356 13 5B            [ 2]  929 	cpw	x, (0x5b, sp)
+      000358 4F               [ 1]  930 	clr	a
+      000359 12 5A            [ 1]  931 	sbc	a, (0x5a, sp)
+      00035B 4F               [ 1]  932 	clr	a
+      00035C 12 59            [ 1]  933 	sbc	a, (0x59, sp)
+      00035E 25 03            [ 1]  934 	jrc	00317$
+      000360 CCr03r73         [ 2]  935 	jp	00130$
+      000363                        936 00317$:
+                                    937 ; skipping generated iCode
+                                    938 ;	src/main.c: 151: REVERSE(LED);
+                                    939 ; genSend
+      000363 A6 20            [ 1]  940 	ld	a, #0x20
+                                    941 ; genSend
+      000365 AE 50 05         [ 2]  942 	ldw	x, #0x5005
+                                    943 ; genCall
+      000368 CDr00r00         [ 4]  944 	call	_GPIO_WriteReverse
+                                    945 ;	src/main.c: 152: led_tick = now;
+                                    946 ; genAssign
+      00036B 16 57            [ 2]  947 	ldw	y, (0x57, sp)
+      00036D 17 41            [ 2]  948 	ldw	(0x41, sp), y
+      00036F 16 55            [ 2]  949 	ldw	y, (0x55, sp)
+      000371 17 3F            [ 2]  950 	ldw	(0x3f, sp), y
+                                    951 ; genLabel
+      000373                        952 00130$:
+                                    953 ;	src/main.c: 155: if (now - uart_tick > 1000) {
+                                    954 ; genMinus
+      000373 1E 57            [ 2]  955 	ldw	x, (0x57, sp)
+      000375 72 F0 45         [ 2]  956 	subw	x, (0x45, sp)
+      000378 1F 5B            [ 2]  957 	ldw	(0x5b, sp), x
+      00037A 7B 56            [ 1]  958 	ld	a, (0x56, sp)
+      00037C 12 44            [ 1]  959 	sbc	a, (0x44, sp)
+      00037E 6B 5A            [ 1]  960 	ld	(0x5a, sp), a
+      000380 7B 55            [ 1]  961 	ld	a, (0x55, sp)
+      000382 12 43            [ 1]  962 	sbc	a, (0x43, sp)
+      000384 6B 59            [ 1]  963 	ld	(0x59, sp), a
+                                    964 ; genCmp
+                                    965 ; genCmpTnz
+      000386 AE 03 E8         [ 2]  966 	ldw	x, #0x03e8
+      000389 13 5B            [ 2]  967 	cpw	x, (0x5b, sp)
+      00038B 4F               [ 1]  968 	clr	a
+      00038C 12 5A            [ 1]  969 	sbc	a, (0x5a, sp)
+      00038E 4F               [ 1]  970 	clr	a
+      00038F 12 59            [ 1]  971 	sbc	a, (0x59, sp)
+      000391 25 03            [ 1]  972 	jrc	00318$
+      000393 CCr01r40         [ 2]  973 	jp	00134$
+      000396                        974 00318$:
+                                    975 ; skipping generated iCode
+                                    976 ;	src/main.c: 158: (uint16_t)(lap / 1000), (uint8_t)((lap % 1000) / 10));
+                                    977 ; genIPush
+      000396 4B E8            [ 1]  978 	push	#0xe8
+      000398 4B 03            [ 1]  979 	push	#0x03
+      00039A 5F               [ 1]  980 	clrw	x
+      00039B 89               [ 2]  981 	pushw	x
+                                    982 ; genIPush
+      00039C 1E 3C            [ 2]  983 	ldw	x, (0x3c, sp)
+      00039E 89               [ 2]  984 	pushw	x
+      00039F 1E 3C            [ 2]  985 	ldw	x, (0x3c, sp)
+      0003A1 89               [ 2]  986 	pushw	x
+                                    987 ; genCall
+      0003A2 CDr00r00         [ 4]  988 	call	__modulong
+      0003A5 5B 08            [ 2]  989 	addw	sp, #8
+                                    990 ; genIPush
+      0003A7 4B 0A            [ 1]  991 	push	#0x0a
+      0003A9 4B 00            [ 1]  992 	push	#0x00
+      0003AB 4B 00            [ 1]  993 	push	#0x00
+      0003AD 4B 00            [ 1]  994 	push	#0x00
+                                    995 ; genIPush
+      0003AF 89               [ 2]  996 	pushw	x
+      0003B0 90 89            [ 2]  997 	pushw	y
+                                    998 ; genCall
+      0003B2 CDr00r00         [ 4]  999 	call	__divulong
+      0003B5 5B 08            [ 2] 1000 	addw	sp, #8
+      0003B7 9F               [ 1] 1001 	ld	a, xl
+                                   1002 ; genCast
+                                   1003 ; genAssign
+                                   1004 ; genIPush
+      0003B8 88               [ 1] 1005 	push	a
+      0003B9 4B E8            [ 1] 1006 	push	#0xe8
+      0003BB 4B 03            [ 1] 1007 	push	#0x03
+      0003BD 5F               [ 1] 1008 	clrw	x
+      0003BE 89               [ 2] 1009 	pushw	x
+                                   1010 ; genIPush
+      0003BF 1E 3D            [ 2] 1011 	ldw	x, (0x3d, sp)
+      0003C1 89               [ 2] 1012 	pushw	x
+      0003C2 1E 3D            [ 2] 1013 	ldw	x, (0x3d, sp)
+      0003C4 89               [ 2] 1014 	pushw	x
+                                   1015 ; genCall
+      0003C5 CDr00r00         [ 4] 1016 	call	__divulong
+      0003C8 5B 08            [ 2] 1017 	addw	sp, #8
+      0003CA 84               [ 1] 1018 	pop	a
+                                   1019 ; genCast
+                                   1020 ; genAssign
+      0003CB 1F 5A            [ 2] 1021 	ldw	(0x5a, sp), x
+                                   1022 ;	src/main.c: 157: (uint16_t)(elapsed / 1000), (uint8_t)((elapsed % 1000) / 10),
+                                   1023 ; genIPush
+      0003CD 88               [ 1] 1024 	push	a
+      0003CE 4B E8            [ 1] 1025 	push	#0xe8
+      0003D0 4B 03            [ 1] 1026 	push	#0x03
+      0003D2 5F               [ 1] 1027 	clrw	x
+      0003D3 89               [ 2] 1028 	pushw	x
+                                   1029 ; genIPush
+      0003D4 1E 39            [ 2] 1030 	ldw	x, (0x39, sp)
+      0003D6 89               [ 2] 1031 	pushw	x
+      0003D7 1E 39            [ 2] 1032 	ldw	x, (0x39, sp)
+      0003D9 89               [ 2] 1033 	pushw	x
+                                   1034 ; genCall
+      0003DA CDr00r00         [ 4] 1035 	call	__modulong
+      0003DD 5B 08            [ 2] 1036 	addw	sp, #8
+      0003DF 1F 46            [ 2] 1037 	ldw	(0x46, sp), x
+      0003E1 84               [ 1] 1038 	pop	a
+                                   1039 ; genIPush
+      0003E2 88               [ 1] 1040 	push	a
+      0003E3 4B 0A            [ 1] 1041 	push	#0x0a
+      0003E5 5F               [ 1] 1042 	clrw	x
+      0003E6 89               [ 2] 1043 	pushw	x
+      0003E7 4B 00            [ 1] 1044 	push	#0x00
+                                   1045 ; genIPush
+      0003E9 1E 4A            [ 2] 1046 	ldw	x, (0x4a, sp)
+      0003EB 89               [ 2] 1047 	pushw	x
+      0003EC 90 89            [ 2] 1048 	pushw	y
+                                   1049 ; genCall
+      0003EE CDr00r00         [ 4] 1050 	call	__divulong
+      0003F1 5B 08            [ 2] 1051 	addw	sp, #8
+      0003F3 84               [ 1] 1052 	pop	a
+                                   1053 ; genCast
+                                   1054 ; genAssign
+      0003F4 41               [ 1] 1055 	exg	a, xl
+      0003F5 6B 5C            [ 1] 1056 	ld	(0x5c, sp), a
+      0003F7 41               [ 1] 1057 	exg	a, xl
+                                   1058 ; genIPush
+      0003F8 88               [ 1] 1059 	push	a
+      0003F9 4B E8            [ 1] 1060 	push	#0xe8
+      0003FB 4B 03            [ 1] 1061 	push	#0x03
+      0003FD 5F               [ 1] 1062 	clrw	x
+      0003FE 89               [ 2] 1063 	pushw	x
+                                   1064 ; genIPush
+      0003FF 1E 39            [ 2] 1065 	ldw	x, (0x39, sp)
+      000401 89               [ 2] 1066 	pushw	x
+      000402 1E 39            [ 2] 1067 	ldw	x, (0x39, sp)
+      000404 89               [ 2] 1068 	pushw	x
+                                   1069 ; genCall
+      000405 CDr00r00         [ 4] 1070 	call	__divulong
+      000408 5B 08            [ 2] 1071 	addw	sp, #8
+      00040A 84               [ 1] 1072 	pop	a
+                                   1073 ; genCast
+                                   1074 ; genAssign
+                                   1075 ;	src/main.c: 156: sprintf(buf, "T=%u.%02us LAP=%u.%02us\r\n",
+                                   1076 ; skipping iCode since result will be rematerialized
+                                   1077 ; skipping iCode since result will be rematerialized
+                                   1078 ; skipping iCode since result will be rematerialized
+                                   1079 ; skipping iCode since result will be rematerialized
+                                   1080 ; genIPush
+      00040B 88               [ 1] 1081 	push	a
+                                   1082 ; genIPush
+      00040C 16 5B            [ 2] 1083 	ldw	y, (0x5b, sp)
+      00040E 90 89            [ 2] 1084 	pushw	y
+                                   1085 ; genIPush
+      000410 7B 5F            [ 1] 1086 	ld	a, (0x5f, sp)
+      000412 88               [ 1] 1087 	push	a
+                                   1088 ; genIPush
+      000413 89               [ 2] 1089 	pushw	x
+                                   1090 ; genIPush
+      000414 4Br0A            [ 1] 1091 	push	#<(___str_0+0)
+      000416 4Bs00            [ 1] 1092 	push	#((___str_0+0) >> 8)
+                                   1093 ; genIPush
+      000418 96               [ 1] 1094 	ldw	x, sp
+      000419 1C 00 0D         [ 2] 1095 	addw	x, #13
+      00041C 89               [ 2] 1096 	pushw	x
+                                   1097 ; genCall
+      00041D CDr00r00         [ 4] 1098 	call	_sprintf
+      000420 5B 0A            [ 2] 1099 	addw	sp, #10
+                                   1100 ;	src/main.c: 159: uart1_puts(buf);
+                                   1101 ; skipping iCode since result will be rematerialized
+                                   1102 ; skipping iCode since result will be rematerialized
+                                   1103 ; genSend
+      000422 96               [ 1] 1104 	ldw	x, sp
+      000423 1C 00 05         [ 2] 1105 	addw	x, #5
+                                   1106 ; genCall
+      000426 CDr00r00         [ 4] 1107 	call	_uart1_puts
+                                   1108 ;	src/main.c: 160: uart_tick = now;
+                                   1109 ; genAssign
+      000429 16 57            [ 2] 1110 	ldw	y, (0x57, sp)
+      00042B 17 45            [ 2] 1111 	ldw	(0x45, sp), y
+      00042D 16 55            [ 2] 1112 	ldw	y, (0x55, sp)
+      00042F 17 43            [ 2] 1113 	ldw	(0x43, sp), y
+                                   1114 ; genGoto
+      000431 CCr01r40         [ 2] 1115 	jp	00134$
+                                   1116 ; genLabel
+      000434                       1117 00136$:
+                                   1118 ;	src/main.c: 163: }
+                                   1119 ; genEndFunction
+      000434 5B 5D            [ 2] 1120 	addw	sp, #93
+      000436 81               [ 4] 1121 	ret
+                                   1122 	.area CODE
+                                   1123 	.area CONST
+      000000                       1124 _SEG7:
+      000000 3F                    1125 	.db #0x3f	; 63
+      000001 06                    1126 	.db #0x06	; 6
+      000002 5B                    1127 	.db #0x5b	; 91
+      000003 4F                    1128 	.db #0x4f	; 79	'O'
+      000004 66                    1129 	.db #0x66	; 102	'f'
+      000005 6D                    1130 	.db #0x6d	; 109	'm'
+      000006 7D                    1131 	.db #0x7d	; 125
+      000007 07                    1132 	.db #0x07	; 7
+      000008 7F                    1133 	.db #0x7f	; 127
+      000009 6F                    1134 	.db #0x6f	; 111	'o'
+                                   1135 	.area CONST
+      00000A                       1136 ___str_0:
+      00000A 54 3D 25 75 2E 25 30  1137 	.ascii "T=%u.%02us LAP=%u.%02us"
+             32 75 73 20 4C 41 50
+             3D 25 75 2E 25 30 32
+             75 73
+      000021 0D                    1138 	.db 0x0d
+      000022 0A                    1139 	.db 0x0a
+      000023 00                    1140 	.db 0x00
+                                   1141 	.area CODE
+                                   1142 	.area INITIALIZER
+                                   1143 	.area CABS (ABS)
