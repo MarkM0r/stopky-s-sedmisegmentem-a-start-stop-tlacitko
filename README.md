@@ -3,6 +3,7 @@ Test project
 Stovky, ktere ukazuji cas na sedmisegmentu pomoci tlacitka zapiname a vypaname stopky.
 
 Schéma zapojení
+
 <img width="707" height="766" alt="IMG_2136" src="https://github.com/user-attachments/assets/f85e8318-80f7-4e50-b639-1a6004f33869" />
 
 
